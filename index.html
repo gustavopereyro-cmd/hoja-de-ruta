@@ -192,27 +192,55 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwZXfCZRwnzUm-KDXRIMNvq
 
 /* ============ ESTADO ============ */
 let currentUser = null;
+let lastCodigo = null;
 let data = { clientes: [], usuarios: [], tipos: [], tareas: [] };
 
 /* ============ API ============ */
-async function apiGet(action, params) {
+async function apiGet(action, params, timeoutMs) {
   const qs = new URLSearchParams({ action, ...(params || {}) }).toString();
-  const res = await fetch(`${API_URL}?${qs}`);
-  return res.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs || 20000);
+  try {
+    const res = await fetch(`${API_URL}?${qs}`, { signal: controller.signal });
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
-async function apiPost(payload) {
-  const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
-  return res.json();
+async function apiPost(payload, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs || 20000);
+  try {
+    const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload), signal: controller.signal });
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-async function loadAll() {
-  const [c, u, t, ta] = await Promise.all([
-    apiGet("clientes"), apiGet("usuarios"), apiGet("tiposTarea"), apiGet("tareas")
-  ]);
-  data.clientes = c.data || [];
-  data.usuarios = u.data || [];
-  data.tipos = t.data || [];
-  data.tareas = ta.data || [];
+// Un solo pedido: trae login + todos los datos juntos (evita múltiples idas y vueltas)
+async function bootstrap(codigo) {
+  const res = await apiGet("bootstrap", { codigo });
+  if (!res.ok) return res;
+  currentUser = res.usuario;
+  data.clientes = res.clientes || [];
+  data.usuarios = res.usuarios || [];
+  data.tipos = res.tipos || [];
+  data.tareas = res.tareas || [];
+  lastCodigo = codigo;
+  return res;
+}
+
+async function refreshData() {
+  const res = await apiGet("bootstrap", { codigo: lastCodigo });
+  if (res.ok) {
+    currentUser = res.usuario;
+    data.clientes = res.clientes || [];
+    data.usuarios = res.usuarios || [];
+    data.tipos = res.tipos || [];
+    data.tareas = res.tareas || [];
+  }
+  return res;
 }
 
 /* ============ HELPERS ============ */
@@ -275,14 +303,15 @@ async function doLogin() {
   const btn = document.getElementById("loginBtn");
   btn.textContent = "Verificando…"; btn.disabled = true;
   try {
-    const res = await apiGet("login", { codigo });
+    const res = await bootstrap(codigo);
     if (!res.ok) { renderLogin(res.error || "Código incorrecto"); return; }
-    currentUser = res.usuario;
-    document.getElementById("app").innerHTML = '<div class="loading">Cargando tu ruta…</div>';
-    await loadAll();
     routeToRole();
   } catch (err) {
-    renderLogin("No se pudo conectar. Revisá tu conexión.");
+    if (err.name === "AbortError") {
+      renderLogin("El servidor tardó demasiado en responder. Probá de nuevo.");
+    } else {
+      renderLogin("No se pudo conectar. Revisá tu conexión.");
+    }
   }
 }
 
@@ -423,11 +452,17 @@ function openCompleteSheet(tarea, estado) {
   overlay.querySelector("#confirmBtn").onclick = async () => {
     const comentario = document.getElementById("comentarioInput").value.trim();
     overlay.querySelector("#confirmBtn").textContent = "Guardando…";
-    await apiPost({ action: "marcarTarea", _row: tarea._row, estado, comentario });
-    overlay.remove();
-    toast("Actualizado");
-    await loadAll();
-    routeToRole();
+    try {
+      await apiPost({ action: "marcarTarea", _row: tarea._row, estado, comentario });
+      overlay.remove();
+      toast("Actualizado");
+      await refreshData();
+      routeToRole();
+    } catch (err) {
+      toast("No se pudo guardar. Probá de nuevo.");
+      overlay.querySelector("#confirmBtn").disabled = false;
+      overlay.querySelector("#confirmBtn").textContent = "Confirmar";
+    }
   };
 }
 
@@ -578,18 +613,24 @@ function openAssignSheet(equipo) {
     if (!tareaTexto || !selCliente.value) { toast("Completá cliente y tarea"); return; }
     const btn = overlay.querySelector("#aConfirm");
     btn.textContent = "Asignando…"; btn.disabled = true;
-    await apiPost({
-      action: "asignarTarea",
-      vendedor: selVendedor.value,
-      id_cliente: selCliente.value,
-      fecha_asignada: overlay.querySelector("#aFecha").value,
-      tarea: tareaTexto,
-      asignado_por: currentUser.Nombre
-    });
-    overlay.remove();
-    toast("Tarea asignada");
-    await loadAll();
-    renderGestion(currentUser.Rol);
+    try {
+      await apiPost({
+        action: "asignarTarea",
+        vendedor: selVendedor.value,
+        id_cliente: selCliente.value,
+        fecha_asignada: overlay.querySelector("#aFecha").value,
+        tarea: tareaTexto,
+        asignado_por: currentUser.Nombre
+      });
+      overlay.remove();
+      toast("Tarea asignada");
+      await refreshData();
+      renderGestion(currentUser.Rol);
+    } catch (err) {
+      toast("No se pudo asignar. Probá de nuevo.");
+      btn.disabled = false;
+      btn.textContent = "Asignar";
+    }
   };
 }
 
