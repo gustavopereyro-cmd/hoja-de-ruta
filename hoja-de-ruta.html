@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Hoja de Ruta — Comercial</title>
+<style>
+  :root{
+    --bg: #F5F6F3;
+    --surface: #FFFFFF;
+    --ink: #1C2321;
+    --ink-soft: #626D67;
+    --line: #DEE4DD;
+    --accent: #2F5D50;
+    --accent-soft: #E6EEEA;
+    --done: #2F7D52;
+    --done-soft: #E5F3EA;
+    --pending: #C1791E;
+    --pending-soft: #FBF0DF;
+    --failed: #B23A34;
+    --failed-soft: #FBE7E5;
+    --radius: 12px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:560px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, monospace;}
+
+  /* ===== Header ===== */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; background:var(--surface); border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:5;
+  }
+  .topbar .brand{display:flex; flex-direction:column; gap:2px;}
+  .topbar .brand b{font-size:16px; letter-spacing:-0.01em;}
+  .topbar .brand span{font-size:12px; color:var(--ink-soft);}
+  .role-badge{
+    font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em;
+    padding:4px 9px; border-radius:20px; background:var(--accent-soft); color:var(--accent);
+  }
+  .logout-btn{
+    background:none; border:none; color:var(--ink-soft); font-size:13px; cursor:pointer; padding:6px;
+  }
+  .header-right{display:flex; align-items:center; gap:10px;}
+
+  /* ===== Login ===== */
+  .login-wrap{flex:1; display:flex; align-items:center; justify-content:center; padding:24px;}
+  .login-card{width:100%; max-width:340px; text-align:center;}
+  .login-mark{
+    width:52px; height:52px; margin:0 auto 18px; border-radius:14px;
+    background:var(--accent); display:flex; align-items:center; justify-content:center;
+  }
+  .login-mark svg{width:26px; height:26px;}
+  .login-card h1{font-size:21px; margin:0 0 4px; letter-spacing:-0.01em;}
+  .login-card p{color:var(--ink-soft); font-size:14px; margin:0 0 28px;}
+  .pin-input{
+    width:100%; font-size:24px; text-align:center; letter-spacing:0.3em;
+    padding:14px; border-radius:var(--radius); border:1.5px solid var(--line);
+    background:var(--surface); color:var(--ink); font-family: ui-monospace, monospace;
+  }
+  .pin-input:focus{outline:none; border-color:var(--accent);}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    background:var(--accent); color:#fff; border:none; border-radius:var(--radius);
+    font-size:14.5px; font-weight:600; padding:13px 18px; cursor:pointer; width:100%; margin-top:14px;
+  }
+  .btn:active{opacity:0.85;}
+  .btn.secondary{background:var(--surface); color:var(--ink); border:1.5px solid var(--line);}
+  .btn.danger{background:var(--failed);}
+  .btn.small{width:auto; padding:9px 14px; font-size:13px;}
+  .error-msg{color:var(--failed); font-size:13px; margin-top:10px; min-height:16px;}
+
+  /* ===== Content shell ===== */
+  .content{padding:18px 20px 60px; flex:1;}
+  .section-title{font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin:22px 0 12px;}
+  .section-title:first-child{margin-top:0;}
+  .day-label{font-size:20px; font-weight:700; letter-spacing:-0.01em; margin-bottom:2px;}
+  .day-sub{font-size:13px; color:var(--ink-soft); margin-bottom:18px;}
+
+  /* ===== Route stop card (vendedor) ===== */
+  .route{position:relative; padding-left:44px;}
+  .route::before{
+    content:""; position:absolute; left:17px; top:8px; bottom:8px; width:2px;
+    background-image: linear-gradient(var(--line) 60%, transparent 0%);
+    background-size: 2px 8px; background-repeat: repeat-y;
+  }
+  .stop{position:relative; margin-bottom:16px;}
+  .stop-ring{
+    position:absolute; left:-44px; top:14px; width:32px; height:32px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .stop-ring .inner{
+    width:24px; height:24px; border-radius:50%; background:var(--surface);
+    display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:var(--ink-soft);
+  }
+  .stop-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 16px;
+  }
+  .stop-card h3{margin:0 0 2px; font-size:15.5px; letter-spacing:-0.01em;}
+  .stop-card .addr{font-size:12.5px; color:var(--ink-soft); margin-bottom:10px;}
+  .task-row{
+    border-top:1px solid var(--line); padding:10px 0; display:flex; flex-direction:column; gap:8px;
+  }
+  .task-row:first-of-type{border-top:none; padding-top:0;}
+  .task-text{font-size:14px; line-height:1.4;}
+  .task-meta{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .status-pill{
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em;
+    padding:3px 9px; border-radius:20px; white-space:nowrap;
+  }
+  .status-pill.Pendiente{background:var(--pending-soft); color:var(--pending);}
+  .status-pill.Hecho{background:var(--done-soft); color:var(--done);}
+  .status-pill.NoPudo{background:var(--failed-soft); color:var(--failed);}
+  .task-actions{display:flex; gap:8px;}
+  .task-actions button{flex:1; font-size:12.5px; padding:8px 10px; border-radius:8px; border:1.5px solid var(--line); background:var(--surface); font-weight:600; cursor:pointer;}
+  .task-actions button.ok{color:var(--done); border-color:var(--done-soft);}
+  .task-actions button.bad{color:var(--failed); border-color:var(--failed-soft);}
+  .task-comment{font-size:12.5px; color:var(--ink-soft); background:var(--bg); border-radius:8px; padding:8px 10px; margin-top:2px;}
+  .empty-state{text-align:center; padding:40px 20px; color:var(--ink-soft);}
+  .empty-state svg{width:36px; height:36px; margin-bottom:10px; opacity:0.5;}
+  .empty-state p{font-size:14px; margin:0;}
+
+  /* ===== Manager/admin summary ===== */
+  .team-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:6px;}
+  .team-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px;}
+  .team-card .name{font-size:13.5px; font-weight:700; margin-bottom:8px;}
+  .team-card .stats{display:flex; gap:12px;}
+  .team-card .stat b{display:block; font-size:17px;}
+  .team-card .stat span{font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.03em;}
+  .team-card .stat.pend b{color:var(--pending);}
+  .team-card .stat.done b{color:var(--done);}
+
+  .filters{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:14px;}
+  select, input[type=text], input[type=date], textarea{
+    font-family:inherit; font-size:13.5px; padding:9px 10px; border-radius:9px; border:1.5px solid var(--line);
+    background:var(--surface); color:var(--ink);
+  }
+  .filters select{flex-shrink:0;}
+
+  .task-list-item{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:12px 14px; margin-bottom:10px;
+  }
+  .task-list-item .top-row{display:flex; justify-content:space-between; gap:8px; margin-bottom:4px;}
+  .task-list-item .who{font-size:12px; color:var(--ink-soft);}
+  .task-list-item .txt{font-size:14px; margin-bottom:4px;}
+
+  /* ===== Assign form / FAB ===== */
+  .fab{
+    position:fixed; bottom:22px; right:50%; transform:translateX(280px);
+    width:52px; height:52px; border-radius:50%; background:var(--accent); color:#fff;
+    display:flex; align-items:center; justify-content:center; border:none; cursor:pointer;
+    box-shadow:0 6px 18px rgba(47,93,80,0.35); z-index:8;
+  }
+  @media (max-width:620px){ .fab{ right:20px; transform:none; } }
+  .fab svg{width:22px; height:22px;}
+
+  .sheet-overlay{
+    position:fixed; inset:0; background:rgba(28,35,33,0.4); display:flex; align-items:flex-end; justify-content:center; z-index:20;
+  }
+  .sheet{
+    background:var(--surface); width:100%; max-width:560px; border-radius:18px 18px 0 0;
+    padding:20px 20px 28px; max-height:88vh; overflow-y:auto;
+  }
+  .sheet h2{font-size:17px; margin:0 0 16px;}
+  .field{margin-bottom:14px; display:flex; flex-direction:column; gap:6px;}
+  .field label{font-size:12.5px; font-weight:600; color:var(--ink-soft);}
+  .field select, .field input, .field textarea{width:100%;}
+  .sheet-close{background:none; border:none; float:right; font-size:20px; color:var(--ink-soft); cursor:pointer;}
+
+  .loading{text-align:center; padding:60px 20px; color:var(--ink-soft); font-size:14px;}
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:#fff; padding:11px 18px; border-radius:10px; font-size:13.5px; z-index:30;
+  }
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Cargando…</div></div>
+
+<script>
+/* ============ CONFIGURACIÓN ============ */
+const API_URL = "https://script.google.com/macros/s/AKfycbwZXfCZRwnzUm-KDXRIMNvqdXTb7bvko9u_vIGtTL97fLXle_zQPV2PzjyTTeR6egFP/exec";
+
+/* ============ ESTADO ============ */
+let currentUser = null;
+let data = { clientes: [], usuarios: [], tipos: [], tareas: [] };
+
+/* ============ API ============ */
+async function apiGet(action, params) {
+  const qs = new URLSearchParams({ action, ...(params || {}) }).toString();
+  const res = await fetch(`${API_URL}?${qs}`);
+  return res.json();
+}
+async function apiPost(payload) {
+  const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+  return res.json();
+}
+
+async function loadAll() {
+  const [c, u, t, ta] = await Promise.all([
+    apiGet("clientes"), apiGet("usuarios"), apiGet("tiposTarea"), apiGet("tareas")
+  ]);
+  data.clientes = c.data || [];
+  data.usuarios = u.data || [];
+  data.tipos = t.data || [];
+  data.tareas = ta.data || [];
+}
+
+/* ============ HELPERS ============ */
+function todayStr() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+function fmtDate(v) {
+  if (!v) return "";
+  const d = new Date(v);
+  if (isNaN(d)) return v;
+  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+function statusClass(estado) {
+  if (estado === "Hecho") return "Hecho";
+  if (estado === "No pudo") return "NoPudo";
+  return "Pendiente";
+}
+function toast(msg) {
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2200);
+}
+function clienteById(id) {
+  return data.clientes.find(c => String(c.ID_Cliente) === String(id));
+}
+function el(html) {
+  const t = document.createElement("template");
+  t.innerHTML = html.trim();
+  return t.content.firstElementChild;
+}
+
+/* ============ LOGIN ============ */
+function renderLogin(error) {
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 20l-5.5-2V4L9 6m0 14l6-2m-6 2V6m6 12l5.5 2V6L15 4m0 14V4m0 0L9 6"/>
+          </svg>
+        </div>
+        <h1>Hoja de Ruta</h1>
+        <p>Ingresá tu código para ver tus visitas</p>
+        <input id="pinInput" class="pin-input" type="tel" inputmode="numeric" maxlength="6" placeholder="••••" autofocus>
+        <button class="btn" id="loginBtn">Entrar</button>
+        <div class="error-msg">${error || ""}</div>
+      </div>
+    </div>`;
+  document.getElementById("loginBtn").onclick = doLogin;
+  document.getElementById("pinInput").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+}
+
+async function doLogin() {
+  const codigo = document.getElementById("pinInput").value.trim();
+  if (!codigo) return;
+  const btn = document.getElementById("loginBtn");
+  btn.textContent = "Verificando…"; btn.disabled = true;
+  try {
+    const res = await apiGet("login", { codigo });
+    if (!res.ok) { renderLogin(res.error || "Código incorrecto"); return; }
+    currentUser = res.usuario;
+    document.getElementById("app").innerHTML = '<div class="loading">Cargando tu ruta…</div>';
+    await loadAll();
+    routeToRole();
+  } catch (err) {
+    renderLogin("No se pudo conectar. Revisá tu conexión.");
+  }
+}
+
+function logout() { currentUser = null; renderLogin(); }
+
+function routeToRole() {
+  if (currentUser.Rol === "Vendedor") renderVendedor();
+  else renderGestion(currentUser.Rol === "Admin" ? "Admin" : "Gerente");
+}
+
+/* ============ TOPBAR ============ */
+function topbarHTML() {
+  return `
+    <div class="topbar">
+      <div class="brand"><b>${currentUser.Nombre}</b><span>Hoja de Ruta</span></div>
+      <div class="header-right">
+        <span class="role-badge">${currentUser.Rol}</span>
+        <button class="logout-btn" onclick="logout()">Salir</button>
+      </div>
+    </div>`;
+}
+
+/* ============ VISTA VENDEDOR ============ */
+function renderVendedor() {
+  const misTareas = data.tareas.filter(t => t.Vendedor === currentUser.Nombre);
+  const pendientesHoy = misTareas.filter(t => statusClass(t.Estado) === "Pendiente");
+  const resto = misTareas.filter(t => statusClass(t.Estado) !== "Pendiente")
+    .sort((a, b) => new Date(b.Fecha_Completado || 0) - new Date(a.Fecha_Completado || 0));
+
+  const byClientPend = groupByCliente(pendientesHoy);
+
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+  app.appendChild(el(topbarHTML()));
+
+  const content = el(`<div class="content"></div>`);
+  content.appendChild(el(`
+    <div>
+      <div class="day-label">Tu ruta de hoy</div>
+      <div class="day-sub">${pendientesHoy.length} tarea${pendientesHoy.length === 1 ? "" : "s"} pendiente${pendientesHoy.length === 1 ? "" : "s"}</div>
+    </div>`));
+
+  if (byClientPend.length === 0) {
+    content.appendChild(el(`
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 13l4 4L19 7"/></svg>
+        <p>No tenés tareas pendientes. ¡Buen trabajo!</p>
+      </div>`));
+  } else {
+    const route = el(`<div class="route"></div>`);
+    byClientPend.forEach((group, i) => route.appendChild(stopCard(group, i + 1)));
+    content.appendChild(route);
+  }
+
+  if (resto.length) {
+    content.appendChild(el(`<div class="section-title">Historial reciente</div>`));
+    const route2 = el(`<div class="route"></div>`);
+    groupByCliente(resto).forEach((group, i) => route2.appendChild(stopCard(group, i + 1, true)));
+    content.appendChild(route2);
+  }
+
+  app.appendChild(content);
+}
+
+function groupByCliente(tareas) {
+  const map = {};
+  tareas.forEach(t => {
+    if (!map[t.ID_Cliente]) map[t.ID_Cliente] = [];
+    map[t.ID_Cliente].push(t);
+  });
+  return Object.keys(map).map(id => ({ cliente: clienteById(id), tareas: map[id] }));
+}
+
+function stopCard(group, num, historical) {
+  const cliente = group.cliente || { Nombre: "Cliente no encontrado", Direccion: "" };
+  const total = group.tareas.length;
+  const hechas = group.tareas.filter(t => t.Estado === "Hecho").length;
+  const pct = total ? Math.round((hechas / total) * 100) : 0;
+
+  const stop = el(`<div class="stop"></div>`);
+  stop.appendChild(el(`
+    <div class="stop-ring" style="background:conic-gradient(var(--done) ${pct}%, var(--line) 0)">
+      <div class="inner">${num}</div>
+    </div>`));
+
+  const card = el(`
+    <div class="stop-card">
+      <h3>${cliente.Nombre}</h3>
+      <div class="addr">${cliente.Direccion || ""}${cliente.Zona ? " · " + cliente.Zona : ""}</div>
+    </div>`);
+
+  group.tareas.forEach(t => card.appendChild(taskRow(t, historical)));
+  stop.appendChild(card);
+  return stop;
+}
+
+function taskRow(t, historical) {
+  const st = statusClass(t.Estado);
+  const row = el(`
+    <div class="task-row">
+      <div class="task-text">${t.Tarea}</div>
+      <div class="task-meta">
+        <span class="status-pill ${st}">${t.Estado || "Pendiente"}</span>
+      </div>
+    </div>`);
+
+  if (!historical && st === "Pendiente") {
+    const actions = el(`
+      <div class="task-actions">
+        <button class="ok">Marcar hecho</button>
+        <button class="bad">No pude</button>
+      </div>`);
+    actions.children[0].onclick = () => openCompleteSheet(t, "Hecho");
+    actions.children[1].onclick = () => openCompleteSheet(t, "No pudo");
+    row.appendChild(actions);
+  } else if (t.Comentario) {
+    row.appendChild(el(`<div class="task-comment">${t.Comentario}</div>`));
+  }
+  return row;
+}
+
+function openCompleteSheet(tarea, estado) {
+  const overlay = el(`
+    <div class="sheet-overlay">
+      <div class="sheet">
+        <button class="sheet-close">×</button>
+        <h2>${estado === "Hecho" ? "Marcar como hecho" : "No se pudo completar"}</h2>
+        <div class="field">
+          <label>${tarea.Tarea}</label>
+          <textarea id="comentarioInput" rows="3" placeholder="Comentario (opcional)"></textarea>
+        </div>
+        <button class="btn" id="confirmBtn">Confirmar</button>
+      </div>
+    </div>`);
+  document.body.appendChild(overlay);
+  overlay.querySelector(".sheet-close").onclick = () => overlay.remove();
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  overlay.querySelector("#confirmBtn").onclick = async () => {
+    const comentario = document.getElementById("comentarioInput").value.trim();
+    overlay.querySelector("#confirmBtn").textContent = "Guardando…";
+    await apiPost({ action: "marcarTarea", _row: tarea._row, estado, comentario });
+    overlay.remove();
+    toast("Actualizado");
+    await loadAll();
+    routeToRole();
+  };
+}
+
+/* ============ VISTA GERENTE / ADMIN ============ */
+let currentFilters = { vendedor: "", estado: "" };
+
+function renderGestion(rol) {
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+  app.appendChild(el(topbarHTML()));
+
+  const equipo = rol === "Admin"
+    ? data.usuarios.filter(u => u.Rol === "Vendedor")
+    : data.usuarios.filter(u => u.Rol === "Vendedor" && u.Gerente === currentUser.Nombre);
+
+  const equipoNombres = equipo.map(v => v.Nombre);
+  const tareasEquipo = data.tareas.filter(t => equipoNombres.includes(t.Vendedor));
+
+  const content = el(`<div class="content"></div>`);
+  content.appendChild(el(`
+    <div>
+      <div class="day-label">${rol === "Admin" ? "Panel general" : "Tu equipo"}</div>
+      <div class="day-sub">${equipo.length} vendedor${equipo.length === 1 ? "" : "es"}</div>
+    </div>`));
+
+  // Resumen por vendedor
+  const grid = el(`<div class="team-grid"></div>`);
+  equipo.forEach(v => {
+    const mias = tareasEquipo.filter(t => t.Vendedor === v.Nombre);
+    const pend = mias.filter(t => statusClass(t.Estado) === "Pendiente").length;
+    const done = mias.filter(t => t.Estado === "Hecho").length;
+    grid.appendChild(el(`
+      <div class="team-card">
+        <div class="name">${v.Nombre}</div>
+        <div class="stats">
+          <div class="stat pend"><b>${pend}</b><span>Pend.</span></div>
+          <div class="stat done"><b>${done}</b><span>Hechas</span></div>
+        </div>
+      </div>`));
+  });
+  content.appendChild(grid);
+
+  // Filtros
+  content.appendChild(el(`<div class="section-title">Tareas del equipo</div>`));
+  const filters = el(`<div class="filters"></div>`);
+  const selVend = el(`<select id="fVend"><option value="">Todos los vendedores</option>${equipo.map(v => `<option value="${v.Nombre}">${v.Nombre}</option>`).join("")}</select>`);
+  const selEstado = el(`<select id="fEstado"><option value="">Todos los estados</option><option value="Pendiente">Pendiente</option><option value="Hecho">Hecho</option><option value="No pudo">No pudo</option></select>`);
+  selVend.value = currentFilters.vendedor;
+  selEstado.value = currentFilters.estado;
+  filters.appendChild(selVend);
+  filters.appendChild(selEstado);
+  content.appendChild(filters);
+
+  const list = el(`<div id="taskList"></div>`);
+  content.appendChild(list);
+  app.appendChild(content);
+
+  function renderList() {
+    const filtered = tareasEquipo.filter(t =>
+      (!currentFilters.vendedor || t.Vendedor === currentFilters.vendedor) &&
+      (!currentFilters.estado || t.Estado === currentFilters.estado || (currentFilters.estado === "Pendiente" && !t.Estado))
+    ).sort((a, b) => new Date(b.Fecha_Asignada) - new Date(a.Fecha_Asignada));
+
+    list.innerHTML = "";
+    if (!filtered.length) {
+      list.appendChild(el(`<div class="empty-state"><p>No hay tareas con esos filtros.</p></div>`));
+      return;
+    }
+    filtered.forEach(t => {
+      const cliente = clienteById(t.ID_Cliente);
+      list.appendChild(el(`
+        <div class="task-list-item">
+          <div class="top-row">
+            <span class="who">${t.Vendedor} · ${cliente ? cliente.Nombre : "?"}</span>
+            <span class="status-pill ${statusClass(t.Estado)}">${t.Estado || "Pendiente"}</span>
+          </div>
+          <div class="txt">${t.Tarea}</div>
+          <div class="who">Para el ${fmtDate(t.Fecha_Asignada)}${t.Comentario ? " · " + t.Comentario : ""}</div>
+        </div>`));
+    });
+  }
+  renderList();
+
+  selVend.onchange = () => { currentFilters.vendedor = selVend.value; renderList(); };
+  selEstado.onchange = () => { currentFilters.estado = selEstado.value; renderList(); };
+
+  // FAB para asignar tarea
+  const fab = el(`
+    <button class="fab" title="Asignar tarea">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>`);
+  fab.onclick = () => openAssignSheet(equipo);
+  app.appendChild(fab);
+}
+
+function openAssignSheet(equipo) {
+  const overlay = el(`
+    <div class="sheet-overlay">
+      <div class="sheet">
+        <button class="sheet-close">×</button>
+        <h2>Asignar tarea</h2>
+        <div class="field">
+          <label>Vendedor</label>
+          <select id="aVendedor">${equipo.map(v => `<option value="${v.Nombre}">${v.Nombre}</option>`).join("")}</select>
+        </div>
+        <div class="field">
+          <label>Cliente</label>
+          <select id="aCliente"></select>
+        </div>
+        <div class="field">
+          <label>Tarea</label>
+          <select id="aTareaTipo">
+            ${data.tipos.map(t => `<option value="${t.Tarea}">${t.Tarea}</option>`).join("")}
+            <option value="__custom__">Otra (escribir)</option>
+          </select>
+        </div>
+        <div class="field" id="aCustomWrap" style="display:none">
+          <label>Detalle de la tarea</label>
+          <textarea id="aCustomText" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="aFecha" value="${todayStr()}">
+        </div>
+        <button class="btn" id="aConfirm">Asignar</button>
+      </div>
+    </div>`);
+  document.body.appendChild(overlay);
+  overlay.querySelector(".sheet-close").onclick = () => overlay.remove();
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+
+  const selVendedor = overlay.querySelector("#aVendedor");
+  const selCliente = overlay.querySelector("#aCliente");
+  const selTareaTipo = overlay.querySelector("#aTareaTipo");
+  const customWrap = overlay.querySelector("#aCustomWrap");
+
+  function refreshClientes() {
+    const misClientes = data.clientes.filter(c => c.Vendedor === selVendedor.value);
+    selCliente.innerHTML = misClientes.map(c => `<option value="${c.ID_Cliente}">${c.Nombre}</option>`).join("")
+      || `<option value="">Sin clientes asignados</option>`;
+  }
+  refreshClientes();
+  selVendedor.onchange = refreshClientes;
+  selTareaTipo.onchange = () => { customWrap.style.display = selTareaTipo.value === "__custom__" ? "flex" : "none"; };
+
+  overlay.querySelector("#aConfirm").onclick = async () => {
+    const tareaTexto = selTareaTipo.value === "__custom__" ? overlay.querySelector("#aCustomText").value.trim() : selTareaTipo.value;
+    if (!tareaTexto || !selCliente.value) { toast("Completá cliente y tarea"); return; }
+    const btn = overlay.querySelector("#aConfirm");
+    btn.textContent = "Asignando…"; btn.disabled = true;
+    await apiPost({
+      action: "asignarTarea",
+      vendedor: selVendedor.value,
+      id_cliente: selCliente.value,
+      fecha_asignada: overlay.querySelector("#aFecha").value,
+      tarea: tareaTexto,
+      asignado_por: currentUser.Nombre
+    });
+    overlay.remove();
+    toast("Tarea asignada");
+    await loadAll();
+    renderGestion(currentUser.Rol);
+  };
+}
+
+/* ============ INICIO ============ */
+renderLogin();
+</script>
+</body>
+</html>
