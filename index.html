@@ -453,13 +453,14 @@ function openCompleteSheet(tarea, estado) {
     const comentario = document.getElementById("comentarioInput").value.trim();
     overlay.querySelector("#confirmBtn").textContent = "Guardando…";
     try {
-      await apiPost({ action: "marcarTarea", _row: tarea._row, estado, comentario });
+      const res = await apiPost({ action: "marcarTarea", _row: tarea._row, estado, comentario });
+      if (!res.ok) throw new Error(res.error || "Error desconocido del servidor");
       overlay.remove();
       toast("Actualizado");
       await refreshData();
       routeToRole();
     } catch (err) {
-      toast("No se pudo guardar. Probá de nuevo.");
+      toast("Error: " + err.message);
       overlay.querySelector("#confirmBtn").disabled = false;
       overlay.querySelector("#confirmBtn").textContent = "Confirmar";
     }
@@ -614,7 +615,7 @@ function openAssignSheet(equipo) {
     const btn = overlay.querySelector("#aConfirm");
     btn.textContent = "Asignando…"; btn.disabled = true;
     try {
-      await apiPost({
+      const res = await apiPost({
         action: "asignarTarea",
         vendedor: selVendedor.value,
         id_cliente: selCliente.value,
@@ -622,12 +623,13 @@ function openAssignSheet(equipo) {
         tarea: tareaTexto,
         asignado_por: currentUser.Nombre
       });
+      if (!res.ok) throw new Error(res.error || "Error desconocido del servidor");
       overlay.remove();
       toast("Tarea asignada");
       await refreshData();
       renderGestion(currentUser.Rol);
     } catch (err) {
-      toast("No se pudo asignar. Probá de nuevo.");
+      toast("Error: " + err.message);
       btn.disabled = false;
       btn.textContent = "Asignar";
     }
